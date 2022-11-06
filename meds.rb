@@ -5,10 +5,11 @@
 #               Also, allow input and update of meds.
 #       Author:  j kepler
 #         Date: 2018-02-28 - 23:13
-#  Last update: 2019-05-27 10:15
+#  Last update: 2021-02-18 12:48
 #      License: MIT License
 # ----------------------------------------------------------------------------- #
 # CHANGELOG:
+# 2021-02-18 - reverted to fzf from smenu since it is faster to type a char
 #  2018-10-21 - readline suddenly not working, values don't show during "mod" and go as nil
 #  2018-12-08 - write to log file so I know when last I bought something. sometimes I am
 #                out of medicine but the software shows I have it.
@@ -17,6 +18,7 @@
 #  2019-01-12 - Put mod in a loop since i modify several at a shot
 #  2019-02-13 - Display only med name in mod menu, and use smenu in place of fzf
 #               since we get a matrix like menu
+#  2021-01-29 - Add printing of 'left' at time of modify
 # ----------------------------------------------------------------------------- #
 # TODO:
 #
@@ -104,10 +106,10 @@ def read_file_in_loop filename # {{{
 
     finish_on_jd = as_on_jd + (stock / daily)
     finish_on = Date.jd(finish_on_jd)
-    balance = (stock/daily) - (Date.today.jd - as_on_jd)
+    balance = (stock / daily) - (Date.today.jd - as_on_jd)
     balance = balance.to_i
     # left is how many tablets are left
-    left = (balance*daily).to_i
+    left = (balance * daily).to_i
     file_a << [ name, daily, stock, as_on, finish_on, balance, left ]
   }
   return file_a
@@ -163,6 +165,12 @@ def change_line filename, argv=[] # {{{
     end
     savedval = newstock
     puts "stock was #{line[2]} as on #{line[3]}. You passed #{newstock}"
+    # puts line
+    # 2021-01-29 - added printing of how many left so we don't have to scroll up.
+    daily = line[1]
+    as_on_jd = line[3]
+    left = calc_left stock, daily, as_on_jd
+    puts "Tablets left: #{left}"
     newstock = vared(newstock, "Enter current stock: ")
     newstock = savedval if newstock.nil? or newstock == ""  ## 2018-10-21 - readline not working
     puts "Got :#{newstock}:" if $opt_debug
@@ -229,9 +237,12 @@ def select_row filename, argv=[] # {{{
 
   # prompt user with medicine names. Some meds have spaces in it, so -W tells smenu not to separate on that.
   # Reject header row with tail, and reject commented out meds
-  str = %x{ cut -f1 -d~ #{filename} | grep -v "^#" | tail -n +2 | sort | smenu -t -W$'\n' }
+  # str = %x{ cut -f1 -d~ #{filename} | grep -v "^#" | tail -n +2 | sort | smenu -t -W$'\n' }
+  # 2021-02-18 - revert to fzf since selection is faster
+  str = %x{cut -f1 -d~ #{filename} | grep -v "^#" | tail -n +2 | sort | fzf --query="#{myarg}" -1 -0}
 
   return nil,nil if str.nil? or str.chomp.size == 0
+  str = str.chomp # 2021-02-18 - added for fzf to remove newline
   # 2019-02-13 - now we only display medicine name,so get the rest of the row
   str = %x{ grep -n "#{str}" #{filename} }
   #tmp = str.chomp.split("\t")
@@ -315,6 +326,22 @@ def find_line array, patt # {{{
   }
   return nil
 end # }}}
+
+## calculate and return how many tablets are left
+# added 2021-01-29 - to show when we modify
+# @stock is how many tablets there were on as_on date
+# @daily is the daily consumption
+# @as_on is the date of last update of @stock
+# These come in as strings and need conversion
+def calc_left stock, daily, as_on
+  stock = stock.to_i
+  daily = daily.to_f
+  as_on_jd = Date.parse(as_on).jd
+  balance = (stock / daily) - (Date.today.jd - as_on_jd)
+  balance = balance.to_i
+  # left is how many tablets are left
+  left = (balance * daily).to_i
+end
 
 
 if __FILE__ == $0
