@@ -20,4 +20,5 @@ So as on march 2nd, I had 24 tablets of pantocid. And she takes one a day. Daily
 
 The rest is calculated from this such as when do the meds finish, and how may days do we have left.
 
-
+2022-11-09 - lost access to mare-imbrium since I had configured a throwaway
+email-id which now is blocked. SO moving repo here. This is a trial to see if it works.
