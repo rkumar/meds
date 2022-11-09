@@ -20,4 +20,5 @@ So as on march 2nd, I had 24 tablets of pantocid. And she takes one a day. Daily
 
 The rest is calculated from this such as when do the meds finish, and how may days do we have left.
 
-
+2022-11-10 - my other account is locked since the throwaway email id is blocked at their domain, so i cnanot get the verification code. I am testing to see how to clone it here. I used the import repository and gave it the HTTPS url.
+Then did a git remove origin and add origin here.
